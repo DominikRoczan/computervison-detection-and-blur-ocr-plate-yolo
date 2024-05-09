@@ -1,1 +1,1 @@
-image_path = 'samples/Bel.jpg'
+image_path = 'input/200.jpg'

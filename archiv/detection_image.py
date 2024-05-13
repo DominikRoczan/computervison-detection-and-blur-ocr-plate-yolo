@@ -4,7 +4,7 @@ import numpy as np
 import easyocr
 import os
 
-from import_image import image_path  # Zaimportuj ścieżkę do obrazu
+from archiv.import_image import image_path  # Zaimportuj ścieżkę do obrazu
 
 # Lista obrazów do przetworzenia
 image_paths = image_path

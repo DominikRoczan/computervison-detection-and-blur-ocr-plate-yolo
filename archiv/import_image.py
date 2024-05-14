@@ -1,0 +1,1 @@
+image_path = 'input/200.jpg'

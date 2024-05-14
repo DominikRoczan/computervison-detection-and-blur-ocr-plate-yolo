@@ -1,10 +1,10 @@
 import os
 from ultralytics import YOLO
 import cv2
-import csv
+import easyocr
 
 # Ścieżka do katalogu zawierającego zdjęcia
-directory_path = 'input_blur'
+directory_path = '../input'
 
 # Lista na ścieżki do zdjęć
 image_paths = []
@@ -17,35 +17,18 @@ for filename in os.listdir(directory_path):
         image_paths.append(os.path.join(directory_path, filename))
 
 # Załaduj model YOLO
-model_path = 'trained_model/weights/_best.pt'
+model_path = '../trained_model/weights/_best.pt'
 model = YOLO(model_path)  # Używając ścieżki do wcześniej wytrenowanego modelu
 
+# OCR
+ocr = easyocr.Reader(['en'])
+
 # Ścieżka do zapisania pliku tekstowego
-dir_name = 'output_blur'
+dir_name = '../output'
 if not os.path.exists(dir_name):
     os.makedirs(dir_name, exist_ok=True)
 
-# Ścieżka do zapisania wyciętych obrazów
-cropped_dir = 'output_cropped'
-if not os.path.exists(cropped_dir):
-    os.makedirs(cropped_dir, exist_ok=True)
-
-# Ścieżka do katalogu z plikami CSV
-csv_dir = 'output_csv'
-if not os.path.exists(csv_dir):
-    os.makedirs(csv_dir, exist_ok=True)
-
-# Ścieżka do pliku CSV
-csv_file_path = os.path.join(csv_dir, 'detections.csv')
-
-# Sprawdzenie, czy plik CSV istnieje; jeśli nie, utwórz nowy plik CSV i zapisz nagłówki
-if not os.path.exists(csv_file_path):
-    with open(csv_file_path, mode='w', newline='') as file:
-        writer = csv.writer(file)
-        writer.writerow(['Nazwa zdjęcia', 'Detekcja', 'Score'])  # Nagłówki kolumn
-
-# Słownik do śledzenia licznika dla każdego pliku
-count = {}
+count = 0
 
 # Przetwarzaj wszystkie obrazy w katalogu
 for image_path in image_paths:
@@ -67,6 +50,7 @@ for image_path in image_paths:
         for b in boxes:
             xyxy = b.xyxy  # Zakładamy, że xyxy to tensor z 4 wartościami [x1, y1, x2, y2]
 
+
             confidence = float(b.conf)  # Prawidłowa pewność detekcji
             class_id = b.cls.item()  # Get class ID for each box
             class_name = r.names[class_id]  # Convert class ID to class name
@@ -75,18 +59,35 @@ for image_path in image_paths:
             if confidence > 0.15:
                 detected = True
                 box_width = int(xyxy[0][2]) - int(xyxy[0][0])
-                # Inkrementuj licznik dla aktualnego pliku
-                count[image_path] = count.get(image_path, 0) + 1
-                current_count = count[image_path]
-                print(f'{current_count} Conf: {confidence:.2f}')
+                count += 1
+                print(f'{count}Conf: {confidence:.2f}')
 
                 # cropped plates
                 cropped_image = image[int(xyxy[0][1]):int(xyxy[0][3]), int(xyxy[0][0]):int(xyxy[0][2])]
                 cropped_images.append(cropped_image)
 
-                # Zapisz wycięty obraz do folderu input_cropped
-                cropped_name = f'{os.path.splitext(os.path.basename(image_path))[0]}_Cropped.jpg'
-                cv2.imwrite(os.path.join(cropped_dir, cropped_name), cropped_image)
+                # Odczytaj tekst z wyciętego obszaru przed sprawdzeniem pewności detekcji
+                # if cropped_images:
+                #     cropped_image = cropped_images[-1]  # Ostatnio dodany obraz do cropped_images
+                #     ocr_result = ocr.readtext(cropped_image)
+                #     print("OCR Result:", ocr_result)
+                #     print(33)
+
+                # Utwórz plik do zapisu wyników OCR
+                ocr_output_path = os.path.join(dir_name, f'ocr_output_{os.path.basename(image_path)}.txt')
+                with open(ocr_output_path, 'w') as f:
+                    ocr_results = []  # Lista na wyniki OCR
+
+                    for cropped_image in cropped_images:
+                        # Odczytaj tekst z wyciętego obrazu
+                        result = ocr.readtext(cropped_image)
+                        ocr_results.append(result)  # Dodaj wynik do listy
+
+                        # Zapisz odczytany tekst do pliku
+                        f.write('Detected text:\n')
+                        for detection in result:
+                            f.write(f'{detection[1]}\n')
+                        f.write('\n')
 
                 # Zablurowanie obszaru wewnątrz prostokąta
                 x1, y1, x2, y2 = int(xyxy[0][0]), int(xyxy[0][1]), int(xyxy[0][2]), int(xyxy[0][3])
@@ -104,14 +105,3 @@ for image_path in image_paths:
     else:
         # Obsługa przypadku, gdy nie wykryto tablic
         print(f"No license plates were detected in {image_path}.")
-
-# Zapisywanie informacji do pliku CSV
-with open(csv_file_path, mode='w', newline='') as file:
-    writer = csv.writer(file)
-    for image_path in image_paths:
-        filename = os.path.basename(image_path)  # Pobierz nazwę pliku bez ścieżki
-        # Pobierz liczbę wykrytych tablic lub zapisz "None", jeśli nie wykryto żadnych
-        detection_count = count.get(image_path, 'None')
-        # Pobierz wynik prawdopodobieństwa
-        score = "{:.2f}".format(float(count.get(image_path, 0))) if detection_count != 'None' else 'None'
-        writer.writerow([filename, detection_count, score])

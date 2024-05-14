@@ -1,0 +1,9 @@
+pip install git+https://github.com/ultralytics/yolov5
+
+numpy
+
+opencv-python easyocr torch torchvision
+
+
+
+pip freeze > requirements.txt

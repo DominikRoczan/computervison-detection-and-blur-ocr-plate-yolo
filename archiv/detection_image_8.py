@@ -4,7 +4,7 @@ import cv2
 import csv
 
 # Ścieżka do katalogu zawierającego zdjęcia
-directory_path = 'input_blur'
+directory_path = '../input_blur'
 
 # Lista na ścieżki do zdjęć
 image_paths = []
@@ -17,21 +17,21 @@ for filename in os.listdir(directory_path):
         image_paths.append(os.path.join(directory_path, filename))
 
 # Załaduj model YOLO
-model_path = 'trained_model/weights/_best.pt'
+model_path = '../trained_model/weights/_best.pt'
 model = YOLO(model_path)  # Używając ścieżki do wcześniej wytrenowanego modelu
 
 # Ścieżka do zapisania pliku tekstowego
-dir_name = 'output_blur'
+dir_name = '../output_blur'
 if not os.path.exists(dir_name):
     os.makedirs(dir_name, exist_ok=True)
 
 # Ścieżka do zapisania wyciętych obrazów
-cropped_dir = 'output_cropped'
+cropped_dir = '../output_cropped'
 if not os.path.exists(cropped_dir):
     os.makedirs(cropped_dir, exist_ok=True)
 
 # Ścieżka do katalogu z plikami CSV
-csv_dir = 'output_csv'
+csv_dir = '../output_csv'
 if not os.path.exists(csv_dir):
     os.makedirs(csv_dir, exist_ok=True)
 
@@ -42,7 +42,7 @@ csv_file_path = os.path.join(csv_dir, 'detections.csv')
 if not os.path.exists(csv_file_path):
     with open(csv_file_path, mode='w', newline='') as file:
         writer = csv.writer(file)
-        writer.writerow(['Nazwa zdjęcia', 'Detekcja', 'Score'])  # Nagłówki kolumn
+        writer.writerow(['Image', 'Detection'])  # Nagłówki kolumn
 
 # Słownik do śledzenia licznika dla każdego pliku
 count = {}
@@ -109,9 +109,6 @@ for image_path in image_paths:
 with open(csv_file_path, mode='w', newline='') as file:
     writer = csv.writer(file)
     for image_path in image_paths:
-        filename = os.path.basename(image_path)  # Pobierz nazwę pliku bez ścieżki
         # Pobierz liczbę wykrytych tablic lub zapisz "None", jeśli nie wykryto żadnych
         detection_count = count.get(image_path, 'None')
-        # Pobierz wynik prawdopodobieństwa
-        score = "{:.2f}".format(float(count.get(image_path, 0))) if detection_count != 'None' else 'None'
-        writer.writerow([filename, detection_count, score])
+        writer.writerow([image_path, detection_count])

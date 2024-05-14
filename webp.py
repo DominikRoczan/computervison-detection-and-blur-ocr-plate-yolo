@@ -2,10 +2,10 @@ import os
 from PIL import Image
 
 # Ścieżka do katalogu zawierającego zdjęcia w formacie WEBP
-input_directory = 'webp_input'
+input_directory = 'input_webp'
 
 # Ścieżka, gdzie mają być zapisane zdjęcia w formacie JPG
-output_directory = 'input'
+output_directory = 'input_blur'
 if not os.path.exists(output_directory):
     os.makedirs(output_directory)
 

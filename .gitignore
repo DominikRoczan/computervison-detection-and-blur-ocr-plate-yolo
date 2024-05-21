@@ -1,13 +1,16 @@
 .venv/
 .idea/
 
-.__pycache__/
+__pycache__/
 
-.archiv/
+parseq
 
-.02_input_blur/
-.03_output_blur/
-.03_output_cropped/
+archiv/
+
+02_input_blur/
+03_output_blur/
+03_output_cropped/
+03_output_csv/
 
 
 

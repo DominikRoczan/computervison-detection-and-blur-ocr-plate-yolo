@@ -1,11 +1,13 @@
 .venv/
 .idea/
 
+.__pycache__/
+
 .archiv/
 
-.canny/
-.input/
-.input_cropped/
-.output/
-.output_canny/
-.webp_input/
+.02_input_blur/
+.03_output_blur/
+.03_output_cropped/
+
+
+

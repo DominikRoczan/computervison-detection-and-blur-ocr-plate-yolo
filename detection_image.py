@@ -4,7 +4,7 @@ import cv2
 import csv
 
 # Ścieżka do katalogu zawierającego zdjęcia
-directory_path = 'input_blur'
+directory_path = '02_input_blur'
 
 # Lista na ścieżki do zdjęć
 image_paths = []
@@ -17,21 +17,21 @@ for filename in os.listdir(directory_path):
         image_paths.append(os.path.join(directory_path, filename))
 
 # Załaduj model YOLO
-model_path = 'trained_model/weights/_best.pt'
+model_path = 'trained_model/train23/weights/62_best.pt'
 model = YOLO(model_path)  # Używając ścieżki do wcześniej wytrenowanego modelu
 
 # Ścieżka do zapisania pliku tekstowego
-dir_name = 'output_blur'
+dir_name = '03_output_blur'
 if not os.path.exists(dir_name):
     os.makedirs(dir_name, exist_ok=True)
 
 # Ścieżka do zapisania wyciętych obrazów
-cropped_dir = 'output_cropped'
+cropped_dir = '03_output_cropped'
 if not os.path.exists(cropped_dir):
     os.makedirs(cropped_dir, exist_ok=True)
 
 # Ścieżka do katalogu z plikami CSV
-csv_dir = 'output_csv'
+csv_dir = '03_output_csv'
 if not os.path.exists(csv_dir):
     os.makedirs(csv_dir, exist_ok=True)
 
@@ -72,7 +72,7 @@ for image_path in image_paths:
             class_name = r.names[class_id]  # Convert class ID to class name
             label = f"{class_name} {confidence:.2f}"
 
-            if confidence > 0.15:
+            if confidence > 0.45:
                 detected = True
                 box_width = int(xyxy[0][2]) - int(xyxy[0][0])
                 # Inkrementuj licznik dla aktualnego pliku

@@ -81,29 +81,29 @@ def prepare_data():
 
         "Poland2": "Pairs/02_Query Set/04_PL.jpg",
         "Germany2": "Pairs/02_Query Set/05_DE.jpg",
-        "Italy2": "Pairs/02_Query Set/06_H.jpg",
+        "Holand2": "Pairs/02_Query Set/06_H.jpg",
 
         "NoBlue": "Pairs/02_Query Set/07.jpg"
     }
 
     # Zbiór wsparcia (Support Set)
     support_set = [image_paths["Poland1"], image_paths["Germany1"], image_paths["Holand1"]]
-
+    
     # Zbiór zapytań (Query Set)
-    query_set = [image_paths["Poland2"], image_paths["Germany2"], image_paths["Italy2"], image_paths["NoBlue"]]
+    query_set = [image_paths["Poland2"], image_paths["Germany2"], image_paths["Holand2"], image_paths["NoBlue"]]
 
     # Tworzenie par
     positive_pairs = [
         (image_paths["Poland1"], image_paths["Poland2"]),
         (image_paths["Germany1"], image_paths["Germany2"]),
-        (image_paths["Holand1"], image_paths["Italy2"])
+        (image_paths["Holand1"], image_paths["Holand2"])
     ]
 
     negative_pairs = [
         (image_paths["Poland1"], image_paths["Germany2"]),
-        (image_paths["Poland1"], image_paths["Italy2"]),
+        (image_paths["Poland1"], image_paths["Holand2"]),
         (image_paths["Germany1"], image_paths["Poland2"]),
-        (image_paths["Germany1"], image_paths["Italy2"]),
+        (image_paths["Germany1"], image_paths["Holand2"]),
         (image_paths["Holand1"], image_paths["Poland2"]),
         (image_paths["Holand1"], image_paths["Germany2"]),
         (image_paths["Poland1"], image_paths["NoBlue"]),

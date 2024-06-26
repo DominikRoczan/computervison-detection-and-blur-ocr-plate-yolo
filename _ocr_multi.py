@@ -10,8 +10,9 @@ parseq = torch.hub.load('baudm/parseq', 'parseq', pretrained=True).eval()
 img_transform = SceneTextDataModule.get_transform(parseq.hparams.img_size)
 
 # Ścieżka do folderu ze zdjęciami
-# folder_path = 'E:/USERS/dominik.roczan/PycharmProjects/computervison-detection-and-blur-ocr-plate-yolo/03_output_cropped'
-folder_path = '../03_output_cropped'
+#TUTAJ MUSI BYĆ ŚCIEŻKA LOKALNA#
+folder_path = 'E:/USERS/dominik.roczan/PycharmProjects/computervison-detection-and-blur-ocr-plate-yolo/03_output_cropped'
+
 
 # Ścieżka do pliku CSV z wynikami detekcji
 # detections_csv_path = 'E:/USERS/dominik.roczan/PycharmProjects/computervison-detection-and-blur-ocr-plate-yolo/03_output_csv/detections.csv'

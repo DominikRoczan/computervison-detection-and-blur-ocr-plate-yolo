@@ -3,6 +3,7 @@ import cv2
 import csv
 from ultralytics import YOLO
 
+
 def load_image_paths(directory_path):
     """
     Load image paths from a specified directory.
@@ -13,7 +14,9 @@ def load_image_paths(directory_path):
     Returns:
     - List[str]: List of file paths to images in the directory.
     """
-    return [os.path.join(directory_path, f) for f in os.listdir(directory_path) if f.endswith('.jpg') or f.endswith('.png')]
+    return [os.path.join(directory_path, f) for f in os.listdir(directory_path) if
+            f.endswith('.jpg') or f.endswith('.png')]
+
 
 def save_csv(csv_file_path, image_paths, results_dict):
     """
@@ -36,8 +39,10 @@ def save_csv(csv_file_path, image_paths, results_dict):
         for image_path in image_paths:
             filename = os.path.basename(image_path)
             detection_count = len(results_dict[image_path]) if results_dict[image_path] != 'None' else 'None'
-            scores = ', '.join([f"{score:.2f}" for score in results_dict[image_path]]) if detection_count != 'None' else 'None'
+            scores = ', '.join(
+                [f"{score:.2f}" for score in results_dict[image_path]]) if detection_count != 'None' else 'None'
             writer.writerow([filename, detection_count, scores])
+
 
 def process_images(directory_path, model_path, output_dirs):
     """
@@ -48,6 +53,7 @@ def process_images(directory_path, model_path, output_dirs):
     - model_path (str): Path to the YOLO model.
     - output_dirs (dict): Dictionary containing output directories for blurred images, cropped images, and CSV file.
     """
+
     # Load image paths
     image_paths = load_image_paths(directory_path)
 
@@ -91,7 +97,8 @@ def process_images(directory_path, model_path, output_dirs):
 
                         # Draw red bounding box and put confidence score
                         cv2.rectangle(image, (xyxy[0], xyxy[1]), (xyxy[2], xyxy[3]), (0, 0, 255), 2)
-                        cv2.putText(image, label, (xyxy[0], xyxy[1] - 10), cv2.FONT_HERSHEY_SIMPLEX, 0.5, (0, 0, 255), 2)
+                        cv2.putText(image, label, (xyxy[0], xyxy[1] - 10), cv2.FONT_HERSHEY_SIMPLEX, 0.5, (0, 0, 255),
+                                    2)
 
                         cropped_image = image[xyxy[1]:xyxy[3], xyxy[0]:xyxy[2]]
                         cropped_name = f'{os.path.splitext(os.path.basename(image_path))[0]}.jpg'
@@ -103,7 +110,8 @@ def process_images(directory_path, model_path, output_dirs):
 
         # Save modified image to the appropriate folder
         if detected:
-            final_image_path = os.path.join(output_dirs['blurred'], f'{os.path.splitext(os.path.basename(image_path))[0]}_Blur.jpg')
+            final_image_path = os.path.join(output_dirs['blurred'],
+                                            f'{os.path.splitext(os.path.basename(image_path))[0]}_Blur.jpg')
             cv2.imwrite(final_image_path, image)
         else:
             final_image_path = os.path.join(output_dirs['blurred'], os.path.basename(image_path))
@@ -116,8 +124,9 @@ def process_images(directory_path, model_path, output_dirs):
     # Save results to the CSV file
     save_csv(csv_file_path, image_paths, results_dict)
 
+
 if __name__ == "__main__":
-    directory_path = '00_input-blur_B'
+    directory_path = 'downloaded_images'
     model_path = 'trained_model/train23/weights/90_best.pt'
 
     # Output directories for saving files
@@ -128,3 +137,15 @@ if __name__ == "__main__":
     }
 
     process_images(directory_path, model_path, output_dirs)
+
+'''
+import sys
+
+def main(arg1, arg2):
+    print(f"Argument 1: {arg1}")
+    print(f"Argument 2: {arg2}")
+
+if __name__ == "__main__":
+    arg1 = sys.argv[1]
+    arg2 = sys.argv[2]
+    main(arg1, arg2)'''

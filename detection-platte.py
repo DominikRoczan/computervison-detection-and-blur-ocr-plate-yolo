@@ -16,7 +16,7 @@ torch.backends.cudnn.enabled = False
 warnings.filterwarnings("ignore")
 
 # Path to the YOLO model
-MODEL_PATH = '../trained_model/90_best.pt'
+MODEL_PATH = './trained_model/90_best.pt'
 
 
 def load_ocr_model():

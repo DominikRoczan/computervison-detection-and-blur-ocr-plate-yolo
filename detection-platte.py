@@ -23,7 +23,7 @@ logging.getLogger('ultralytics').setLevel(logging.ERROR)
 sys.stderr = open(os.devnull, 'w')
 
 # Path to the YOLO model
-MODEL_PATH = './trained_model/train23/weights/90_best.pt'
+MODEL_PATH = './trained_model/90_best.pt'
 # MODEL_PATH = '../trained_model/train23/weights/Plates_Faces.pt'
 
 

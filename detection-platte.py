@@ -1,22 +1,30 @@
-import torch
-import cv2
-import argparse
-import json
-import os
 from ultralytics import YOLO
-from strhub.data.module import SceneTextDataModule
-import warnings
-import pytorch_lightning as pl
 from torchvision import transforms
+import torch
+from strhub.data.module import SceneTextDataModule
+import pytorch_lightning as pl
+
+import cv2
+
+import json
+import argparse
+import os
+import sys
+
+import warnings
+import logging
 
 # Disable cudnn
 torch.backends.cudnn.enabled = False
 
-# Disable warnings
+# Disable warnings, logs, edirect stdout and stderr to null
 warnings.filterwarnings("ignore")
+logging.getLogger('ultralytics').setLevel(logging.ERROR)
+sys.stderr = open(os.devnull, 'w')
 
 # Path to the YOLO model
-MODEL_PATH = './trained_model/90_best.pt'
+MODEL_PATH = './trained_model/train23/weights/90_best.pt'
+# MODEL_PATH = '../trained_model/train23/weights/Plates_Faces.pt'
 
 
 def load_ocr_model():

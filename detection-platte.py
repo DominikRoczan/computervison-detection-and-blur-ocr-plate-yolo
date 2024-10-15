@@ -23,7 +23,7 @@ logging.getLogger('ultralytics').setLevel(logging.ERROR)
 sys.stderr = open(os.devnull, 'w')
 
 # Path to the YOLO model
-MODEL_PATH = './trained_model/90_best.pt'
+MODEL_PATH = './trained_model/Plates_Faces.pt'
 # MODEL_PATH = '../trained_model/train23/weights/Plates_Faces.pt'
 
 
@@ -98,20 +98,25 @@ def process_single_image(image_path, parseq, img_transform):
                     x1, y1, x2, y2 = xyxy
                     cropped_img = image[y1:y2, x1:x2]
 
-                    # Perform OCR on the cropped image
-                    ocr_result = perform_ocr(cropped_img, parseq, img_transform)
-
-                    # Store detection and OCR information in a dictionary
-                    conf = f'{confidence: .2f}'
+                    # Initialize detection info
                     detection_info = {
-                        'class_name': class_name,
-                        'confidence': conf,
-                        'coordinates': {
+                        'Nazwa klasy': class_name,
+                        'Wynik': f'{confidence:.2f}',
+                        'Koordynaty': {
                             'A': f"({xyxy[0]}, {xyxy[1]})",
                             'B': f"({xyxy[2]}, {xyxy[3]})"
-                        },
-                        'ocr_plate': ocr_result  # Add OCR result
+                        }
                     }
+
+                    # Perform OCR and add 'Numer tablicy' only if the class is not 'Twarz'
+                    if class_name != "Twarz":
+                        # Wykonaj OCR dla klas innych niż "Twarz"
+                        ocr_result = perform_ocr(cropped_img, parseq, img_transform)
+
+                        if ocr_result:
+                            detection_info['Numer tablicy'] = ocr_result
+
+                    # Append detection info to the list
                     detections.append(detection_info)
 
     # Print the detection and OCR results as JSON

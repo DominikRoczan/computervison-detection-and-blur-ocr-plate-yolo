@@ -55,7 +55,7 @@ def load_ocr_model():
     global parseq_model, img_transform
     if parseq_model is None:
         ocr_model_start_time = time.perf_counter()
-        parseq_model = torch.hub.load('baudm/parseq', 'parseq', pretrained=True).eval().to(device)
+        parseq_model = torch.hub.load('baudm/parseq', 'parseq_tiny', pretrained=True).eval().to(device)
         img_transform = SceneTextDataModule.get_transform(parseq_model.hparams.img_size)
         ocr_model_end_time = time.perf_counter()
         print(f"✅ OCR model (Parseq) loaded on {device}")

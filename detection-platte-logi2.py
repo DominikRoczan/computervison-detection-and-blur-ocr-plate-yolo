@@ -26,12 +26,10 @@ logging.getLogger('ultralytics').setLevel(logging.ERROR)
 sys.stderr = open(os.devnull, 'w')
 
 # Check GPU availability
-device = "cuda" if torch.cuda.is_available() else "cpu"
 device = "cpu"
 
 # Path to the YOLO model
 MODEL_PATH = './trained_model/Plates_Faces.pt'
-# MODEL_PATH = '../trained_model/train23/weights/Plates_Faces.pt'
 
 yolo_model = None
 parseq_model = None

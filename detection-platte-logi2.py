@@ -121,11 +121,11 @@ def process_single_image(image_path, yolo_model, parseq_model):
                         }
                     }
 
-                    if class_name != "Face":
+                    if class_name != "Twarz":
                         cropped_img = image[y1:y2, x1:x2]
                         ocr_result = perform_ocr(cropped_img)
                         if ocr_result:
-                            detection_info["Plate number"] = ocr_result
+                            detection_info["Plate_number"] = ocr_result
 
                     detections.append(detection_info)
 

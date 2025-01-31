@@ -1,103 +1,106 @@
+import time
+
+# Measure time from the start of the script
+script_start_time = time.perf_counter()
+
+import argparse
 from ultralytics import YOLO
 from torchvision import transforms
-import torch
-import torch.nn.functional as F
 from strhub.data.module import SceneTextDataModule
 
+import torch
 import cv2
+
+import sys
+import os
+import warnings
+import logging
 import json
-import argparse
-import time
-from PIL import Image
 
+print("⏳ Script has started...")
+print(f"⏱️ Total execution time (from script start to imports): {time.perf_counter() - script_start_time:.4f} s")
 
-# 🔹 Ustawienia CUDA dla lepszej wydajności
-torch.backends.cudnn.benchmark = True
-torch.cuda.empty_cache()
+# Disable warnings, logs, and redirect stdout and stderr to null
+warnings.filterwarnings("ignore")
+logging.getLogger('ultralytics').setLevel(logging.ERROR)
+sys.stderr = open(os.devnull, 'w')
 
-# 🔹 Ścieżka do modelu YOLO
+# Check GPU availability
+device = "cuda" if torch.cuda.is_available() else "cpu"
+device = "cpu"
+
+# Path to the YOLO model
 MODEL_PATH = './trained_model/Plates_Faces.pt'
 # MODEL_PATH = '../trained_model/train23/weights/Plates_Faces.pt'
 
-
-# 🔹 Zmienna globalna do przechowywania modeli
 yolo_model = None
 parseq_model = None
-
-# 🔹 Sprawdzanie dostępności GPU
-device = "cuda" if torch.cuda.is_available() else "cpu"
-# device = "cpu"
+img_transform = None
 
 
 def load_yolo_model():
-    """Ładowanie modelu YOLO"""
+    """Load the YOLO model"""
     global yolo_model
     if yolo_model is None:
+        yolo_model_start_time = time.perf_counter()
         yolo_model = YOLO(MODEL_PATH).to(device)
+        yolo_model_end_time = time.perf_counter()
         print(f"✅ YOLO model loaded on {device}")
+        print(f"⏱️ YOLO model loading time: {yolo_model_end_time - yolo_model_start_time:.4f} s")
     return yolo_model
 
 
 def load_ocr_model():
-    """Ładowanie modelu OCR (PARSeq)"""
-    global parseq_model
+    """Load the OCR model (PARSeq)"""
+    global parseq_model, img_transform
     if parseq_model is None:
+        ocr_model_start_time = time.perf_counter()
         parseq_model = torch.hub.load('baudm/parseq', 'parseq', pretrained=True).eval().to(device)
-        print(f"✅ PARSeq model loaded on {device}")
-    return parseq_model
+        img_transform = SceneTextDataModule.get_transform(parseq_model.hparams.img_size)
+        ocr_model_end_time = time.perf_counter()
+        print(f"✅ OCR model (Parseq) loaded on {device}")
+        print(f"⏱️ OCR model loading time: {ocr_model_end_time - ocr_model_start_time:.4f} s")
+    return parseq_model, img_transform
 
 
-def perform_ocr_batch(images, parseq, img_transform):
-    """OCR dla batcha obrazów"""
+def perform_ocr(img):
+    """Perform OCR on the given image"""
     try:
-        start_time = time.time()
+        ocr_start_time = time.perf_counter()
+        img = cv2.cvtColor(img, cv2.COLOR_BGR2RGB)
+        img_pil = transforms.ToPILImage()(img)
+        img_tensor = img_transform(img_pil).unsqueeze(0).to(device)
 
-        # 🔹 Konwersja do tensora
-        tensors = [img_transform(Image.fromarray(cv2.cvtColor(img, cv2.COLOR_BGR2RGB))).unsqueeze(0).to(device) for img in images]
-        batch_images = torch.cat(tensors, dim=0)
-
-        preprocess_ocr_time = time.time() - start_time
-
-        # 🔹 OCR batch processing
-        inference_start_time = time.time()
         with torch.no_grad():
-            logits = parseq(batch_images)
-        pred = F.softmax(logits, dim=-1)
-        labels, _ = parseq.tokenizer.decode(pred)
+            logits = parseq_model(img_tensor)
+        pred = logits.softmax(-1)
+        label, _ = parseq_model.tokenizer.decode(pred)
 
-        inference_ocr_time = time.time() - inference_start_time
-        total_ocr_time = preprocess_ocr_time + inference_ocr_time
-
-        return labels, preprocess_ocr_time, inference_ocr_time, total_ocr_time
+        ocr_time = time.perf_counter() - ocr_start_time
+        print(f"🔡 OCR processing time: {ocr_time:.4f} s")
+        return label[0]
     except Exception as e:
         print(f"❌ Error during OCR: {e}")
-        return None, 0, 0, 0
+        return None
 
 
-def process_single_image(image_path, yolo_model, parseq):
-    """Przetwarzanie pojedynczego obrazu"""
-    total_start_time = time.time()
+def process_single_image(image_path, yolo_model, parseq_model):
+    """Process a single image"""
+    total_start_time = time.perf_counter()
     print("🚀 Starting full image processing...")
 
-    # 🔹 Ładowanie obrazu
-    image_load_start = time.time()
+    image_load_start = time.perf_counter()
     image = cv2.imread(image_path)
-    image = cv2.resize(image, (1280, 720))  # Resize dla szybszego YOLO
-    image_load_time = time.time() - image_load_start
+    image_load_time = time.perf_counter() - image_load_start
     print(f"🖼️ Image loading time: {image_load_time:.4f} s")
 
-    # 🔹 YOLO wykrywanie
-    yolo_inference_start = time.time()
+    yolo_inference_start = time.perf_counter()
     results = yolo_model(image)
-    yolo_inference_time = time.time() - yolo_inference_start
+    yolo_inference_time = time.perf_counter() - yolo_inference_start
     print(f"🔍 YOLO inference time: {yolo_inference_time:.4f} s")
 
-    # 🔹 Procesowanie detekcji
-    detection_start = time.time()
+    detection_start = time.perf_counter()
     detections = []
-    ocr_images = []
-    ocr_positions = []
-    img_transform = SceneTextDataModule.get_transform(parseq.hparams.img_size)
 
     for r in results:
         if hasattr(r, 'boxes'):
@@ -109,8 +112,6 @@ def process_single_image(image_path, yolo_model, parseq):
 
                 if confidence > 0.35:
                     x1, y1, x2, y2 = xyxy
-                    cropped_img = image[y1:y2, x1:x2]
-
                     detection_info = {
                         "className": class_name,
                         "confidence": f"{confidence:.2f}",
@@ -120,34 +121,19 @@ def process_single_image(image_path, yolo_model, parseq):
                         }
                     }
 
-                    # 🔹 OCR tylko dla tablic
-                    if class_name != "Twarz":
-                        ocr_images.append(cropped_img)
-                        ocr_positions.append(detection_info)
+                    if class_name != "Face":
+                        cropped_img = image[y1:y2, x1:x2]
+                        ocr_result = perform_ocr(cropped_img)
+                        if ocr_result:
+                            detection_info["Plate number"] = ocr_result
 
                     detections.append(detection_info)
 
-    detection_processing_time = time.time() - detection_start
+    detection_processing_time = time.perf_counter() - detection_start
     print(f"📊 Detection processing time: {detection_processing_time:.4f} s")
 
-    # 🔹 OCR (przetwarzanie batcha)
-    if ocr_images:
-        ocr_results, preprocess_ocr_time, inference_ocr_time, total_ocr_time = perform_ocr_batch(
-            ocr_images, parseq, img_transform
-        )
+    total_processing_time = time.perf_counter() - total_start_time
 
-        for i, ocr_text in enumerate(ocr_results):
-            ocr_positions[i]["Numer tablicy"] = ocr_text
-            ocr_positions[i]["OCR_times"] = {
-                "preprocess_ocr_time": f"{preprocess_ocr_time:.4f} s",
-                "inference_ocr_time": f"{inference_ocr_time:.4f} s",
-                "total_ocr_time": f"{total_ocr_time:.4f} s"
-            }
-
-    # 🔹 Czas całkowity
-    total_processing_time = time.time() - total_start_time
-
-    # 🔹 Wynik JSON
     output_data = {
         "detections": detections,
         "timing": {
@@ -157,28 +143,23 @@ def process_single_image(image_path, yolo_model, parseq):
             "total_processing_time": f"{total_processing_time:.4f} s"
         }
     }
-
-    # 🔹 Wyświetlenie JSON
     print(json.dumps(output_data, indent=4))
 
 
 def parse_arguments():
-    """Obsługa argumentów wiersza poleceń"""
-    parser = argparse.ArgumentParser(description="Wykrywanie i OCR tablic rejestracyjnych.")
-    parser.add_argument("image_path", type=str, help="Ścieżka do pliku obrazu")
+    parser = argparse.ArgumentParser(description="Object detection with OCR.")
+    parser.add_argument("image_path", type=str, help="Path to the image file")
     return parser.parse_args()
 
 
 def main():
-    """Główna funkcja"""
     args = parse_arguments()
-
-    # 🔹 Załaduj modele raz i przekazuj do funkcji
     global yolo_model, parseq_model
     yolo_model = load_yolo_model()
-    parseq_model = load_ocr_model()
-
+    parseq_model, _ = load_ocr_model()
     process_single_image(args.image_path, yolo_model, parseq_model)
+    script_end_time = time.perf_counter()
+    print(f"⏱️ Total execution time (from script start to end): {script_end_time - script_start_time:.4f} s")
 
 
 if __name__ == "__main__":

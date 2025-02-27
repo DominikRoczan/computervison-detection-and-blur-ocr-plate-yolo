@@ -14,7 +14,7 @@ sys.stderr = open(os.devnull, 'w')
 
 device = "cpu"
 
-MODEL_PATH = './trained_model/train23/weights/Plates_Faces.pt'
+MODEL_PATH = './trained_model/Plates_Faces.pt'
 
 yolo_model = None
 parseq_model = None
